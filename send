@@ -1,0 +1,63 @@
+import java.io.BufferedReader;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.Socket;
+
+/*
+ * 发送数据的线程
+ */
+public class send implements Runnable{
+	private BufferedReader console;//控制台输入流
+	private DataOutputStream dos;//管道输出流
+	private boolean isRunning=true;//控制线程
+	
+	public send() {
+		console=new BufferedReader(new InputStreamReader(System.in));
+	}
+	public send(Socket client) {
+		this();
+		try {
+			dos=new DataOutputStream(client.getOutputStream());
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			//e.printStackTrace();
+			isRunning=false;
+			CloseUtil.closeAll(dos,console);
+		}
+		
+	}
+	//1、从控制台接收数据
+	//2、发送数据
+	private String getMsgFromConsole() {
+		try {
+			return console.readLine();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return "";
+	}
+	public void Send() {
+		 String msg=getMsgFromConsole();
+		 if(null!=msg && !msg.equals("")) {
+			 try {
+				dos.writeUTF(msg);
+				dos.flush();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				//e.printStackTrace();
+				isRunning=false;
+				CloseUtil.closeAll(dos,console);
+			}
+		 }
+	}
+	@Override
+	public void run() {
+		 while(isRunning) {
+			 Send();
+		 }
+		
+	}
+
+}
